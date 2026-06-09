@@ -1,0 +1,22 @@
+# Entorno
+.env
+
+# Java / Maven
+target/
+*.class
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+
+# Serenity
+test/frontend/target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store

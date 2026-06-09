@@ -1,0 +1,68 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: vet_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${DB_NAME:-veterinaria}
+      MYSQL_USER: ${DB_USER:-vetuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-vetpass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: vet_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+
+  backend:
+    build:
+      context: ./src/Backend
+    container_name: vet_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-veterinaria}
+      DB_USER: ${DB_USER:-vetuser}
+      DB_PASSWORD: ${DB_PASSWORD:-vetpass}
+      JWT_SECRET: ${JWT_SECRET:-cambiestaclaveultrasecretaparadesarrollo1234567890}
+      JWT_EXP_MIN: ${JWT_EXP_MIN:-120}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@vet.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./src/FrontEnd
+    container_name: vet_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  db_data:

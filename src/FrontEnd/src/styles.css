@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-dark;
+  }
+  .btn-secondary {
+    @apply btn bg-slate-200 text-slate-800 hover:bg-slate-300;
+  }
+  .btn-edit {
+    @apply btn bg-amber-500 text-white hover:bg-amber-600;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+  .field {
+    @apply flex flex-col gap-1 text-sm text-slate-600;
+  }
+  .field input,
+  .field select {
+    @apply rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand;
+  }
+  .card {
+    @apply mb-6 rounded-lg bg-white p-5 shadow-sm;
+  }
+  .portal-card {
+    @apply mb-6 rounded-2xl bg-white p-6 shadow-md border border-orange-100;
+  }
+  .btn-portal {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors disabled:opacity-50;
+  }
+  .field-portal {
+    @apply flex flex-col gap-1 text-sm text-slate-600;
+  }
+  .field-portal input,
+  .field-portal select {
+    @apply rounded-xl border border-orange-200 px-3 py-2 text-sm text-slate-900 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200;
+  }
+}
