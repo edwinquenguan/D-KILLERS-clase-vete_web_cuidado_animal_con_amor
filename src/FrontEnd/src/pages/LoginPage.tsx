@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,9 +16,10 @@ export default function LoginPage() {
     setError('');
     setCargando(true);
     try {
-      const auth = await authApi.login({ email, password });
-      entrar(auth);
-      navigate(auth.rol === 'ADMIN' ? '/mascotas' : '/portal');
+      const res = await authApi.login({ email, password });
+      entrar(res.data);
+      // Todos los roles del staff van al panel principal
+      navigate('/mascotas');
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -29,7 +30,6 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-400 via-amber-300 to-emerald-500 p-4">
       <div className="w-full max-w-md">
-        {/* Logo / Marca */}
         <div className="mb-8 text-center">
           <div className="text-6xl mb-3">🐾</div>
           <h1 className="text-3xl font-extrabold text-white drop-shadow-md">
@@ -40,7 +40,7 @@ export default function LoginPage() {
 
         <div className="rounded-3xl bg-white/95 backdrop-blur p-8 shadow-2xl">
           <h2 className="mb-1 text-xl font-bold text-slate-800">Iniciar sesión</h2>
-          <p className="mb-6 text-sm text-slate-500">Accede a tu portal de cliente</p>
+          <p className="mb-6 text-sm text-slate-500">Acceso para el personal de la clínica</p>
 
           {error && (
             <p className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600" data-testid="error">
@@ -80,13 +80,6 @@ export default function LoginPage() {
               {cargando ? 'Entrando…' : 'Entrar'}
             </button>
           </form>
-
-          <p className="mt-6 text-center text-sm text-slate-500">
-            ¿No tienes cuenta?{' '}
-            <Link to="/registro" className="font-semibold text-orange-500 hover:text-orange-600">
-              Regístrate gratis
-            </Link>
-          </p>
         </div>
       </div>
     </div>

@@ -1,32 +1,32 @@
 import { useState } from 'react';
-import { duenosApi } from '../api/client';
-import type { Dueno } from '../api/types';
+import { ownersApi } from '../api/client';
+import type { Owner, CreateOwnerRequest } from '../api/types';
 
 interface Props {
-  onCreado: (dueno: Dueno) => void;
+  onCreado: (owner: Owner) => void;
   onCancelar: () => void;
 }
 
-const vacio: Dueno = { nombre: '', documento: '', tipoDocumento: 'CC', contacto: '', direccion: '' };
+const vacio: CreateOwnerRequest = { name: '', first_surname: '', phone: '', email: '', address: '' };
 
-/** Mini-formulario para dar de alta un dueño sin salir de la página de mascotas. */
 export default function NuevoDuenoInline({ onCreado, onCancelar }: Props) {
-  const [form, setForm] = useState<Dueno>(vacio);
+  const [form, setForm] = useState<CreateOwnerRequest>(vacio);
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
 
-  const set = (campo: keyof Dueno, valor: string) => setForm((f) => ({ ...f, [campo]: valor }));
+  const set = (campo: keyof CreateOwnerRequest, valor: string) =>
+    setForm((f) => ({ ...f, [campo]: valor }));
 
   const guardar = async () => {
-    if (!form.nombre || !form.documento) {
-      setError('Nombre y documento son obligatorios');
+    if (!form.name || !form.first_surname) {
+      setError('Nombre y primer apellido son obligatorios');
       return;
     }
     setError('');
     setGuardando(true);
     try {
-      const creado = await duenosApi.create(form);
-      onCreado(creado);
+      const res = await ownersApi.create(form);
+      onCreado(res.data);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -36,32 +36,29 @@ export default function NuevoDuenoInline({ onCreado, onCancelar }: Props) {
 
   return (
     <div className="mt-3 rounded-md border border-brand/40 bg-brand/5 p-4">
-      <h3 className="mb-3 font-semibold text-brand-dark">Nuevo dueño</h3>
+      <h3 className="mb-3 font-semibold text-brand-dark">Nuevo propietario</h3>
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="field">Nombre
-          <input data-testid="nuevo-dueno-nombre" value={form.nombre}
-            onChange={(e) => set('nombre', e.target.value)} />
+          <input data-testid="nuevo-dueno-nombre" value={form.name}
+            onChange={(e) => set('name', e.target.value)} />
         </label>
-        <label className="field">Documento
-          <input data-testid="nuevo-dueno-documento" value={form.documento}
-            onChange={(e) => set('documento', e.target.value)} />
+        <label className="field">Primer apellido
+          <input value={form.first_surname ?? ''}
+            onChange={(e) => set('first_surname', e.target.value)} />
         </label>
-        <label className="field">Tipo documento
-          <select value={form.tipoDocumento ?? 'CC'} onChange={(e) => set('tipoDocumento', e.target.value)}>
-            <option value="CC">CC</option>
-            <option value="CE">CE</option>
-            <option value="TI">TI</option>
-            <option value="NIT">NIT</option>
-          </select>
+        <label className="field">Teléfono
+          <input value={form.phone ?? ''}
+            onChange={(e) => set('phone', e.target.value)} />
         </label>
-        <label className="field">Contacto
-          <input value={form.contacto ?? ''} onChange={(e) => set('contacto', e.target.value)} />
+        <label className="field">Email
+          <input type="email" value={form.email ?? ''}
+            onChange={(e) => set('email', e.target.value)} />
         </label>
       </div>
       <div className="mt-3 flex gap-2">
         <button type="button" className="btn-primary" data-testid="guardar-nuevo-dueno"
-          onClick={guardar} disabled={guardando}>Guardar dueño</button>
+          onClick={guardar} disabled={guardando}>Guardar propietario</button>
         <button type="button" className="btn-secondary" onClick={onCancelar}>Cancelar</button>
       </div>
     </div>

@@ -2,10 +2,26 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-/** Protege rutas: exige sesión y, opcionalmente, un rol concreto. */
-export default function RutaProtegida({ children, rol }: { children: ReactNode; rol?: string }) {
-  const { sesion } = useAuth();
+interface Props {
+  children: ReactNode;
+  /** Roles permitidos: 'Admin' | 'Veterinario' | 'Recepcionista' */
+  roles?: string[];
+}
+
+export default function RutaProtegida({ children, roles }: Props) {
+  const { sesion, cargando } = useAuth();
+
+  if (cargando) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-slate-500">Verificando sesión…</p>
+      </div>
+    );
+  }
+
   if (!sesion) return <Navigate to="/login" replace />;
-  if (rol && sesion.rol !== rol) return <Navigate to="/" replace />;
+
+  if (roles && !roles.includes(sesion.role)) return <Navigate to="/" replace />;
+
   return <>{children}</>;
 }

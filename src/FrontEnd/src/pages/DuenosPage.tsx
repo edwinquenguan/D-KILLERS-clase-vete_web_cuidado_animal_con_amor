@@ -1,30 +1,31 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { duenosApi } from '../api/client';
-import type { Dueno } from '../api/types';
+import { ownersApi } from '../api/client';
+import type { Owner, CreateOwnerRequest } from '../api/types';
 
-const vacio: Dueno = { nombre: '', documento: '', tipoDocumento: 'CC', contacto: '', direccion: '' };
+const vacio: CreateOwnerRequest = {
+  name: '', first_surname: '', second_surname: '', phone: '', email: '', address: '',
+};
 
 export default function DuenosPage() {
-  const [items, setItems] = useState<Dueno[]>([]);
-  const [form, setForm] = useState<Dueno>(vacio);
+  const [items, setItems] = useState<Owner[]>([]);
+  const [form, setForm] = useState<CreateOwnerRequest>(vacio);
   const [editId, setEditId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
-  const cargar = () => duenosApi.list().then(setItems).catch((e) => setError(e.message));
+  const cargar = () =>
+    ownersApi.list().then((res) => setItems(res.data)).catch((e) => setError(e.message));
 
-  useEffect(() => {
-    cargar();
-  }, []);
+  useEffect(() => { cargar(); }, []);
 
-  const onChange = (campo: keyof Dueno, valor: string) =>
+  const onChange = (campo: keyof CreateOwnerRequest, valor: string) =>
     setForm((f) => ({ ...f, [campo]: valor }));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      if (editId) await duenosApi.update(editId, form);
-      else await duenosApi.create(form);
+      if (editId) await ownersApi.update(editId, form);
+      else await ownersApi.create(form);
       setForm(vacio);
       setEditId(null);
       cargar();
@@ -33,44 +34,53 @@ export default function DuenosPage() {
     }
   };
 
-  const editar = (d: Dueno) => {
-    setForm(d);
-    setEditId(d.id ?? null);
+  const editar = (d: Owner) => {
+    setForm({
+      name: d.name,
+      first_surname: d.first_surname,
+      second_surname: d.second_surname ?? '',
+      phone: d.phone ?? '',
+      email: d.email ?? '',
+      address: d.address ?? '',
+    });
+    setEditId(d.owner_id);
   };
 
-  const eliminar = async (id: number) => {
-    await duenosApi.remove(id);
-    cargar();
+  const deshabilitar = async (id: number) => {
+    try { await ownersApi.disable(id); cargar(); }
+    catch (err) { setError((err as Error).message); }
   };
 
   return (
     <>
       <div className="card">
-        <h2 className="mb-4 text-xl font-semibold">{editId ? 'Editar dueño' : 'Nuevo dueño'}</h2>
+        <h2 className="mb-4 text-xl font-semibold">{editId ? 'Editar propietario' : 'Nuevo propietario'}</h2>
         {error && <p className="mb-3 text-sm text-red-600" data-testid="error">{error}</p>}
         <form onSubmit={submit}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="field">Nombre
-              <input data-testid="nombre" value={form.nombre}
-                onChange={(e) => onChange('nombre', e.target.value)} required />
+              <input data-testid="nombre" value={form.name}
+                onChange={(e) => onChange('name', e.target.value)} required />
             </label>
-            <label className="field">Contacto
-              <input value={form.contacto ?? ''} onChange={(e) => onChange('contacto', e.target.value)} />
+            <label className="field">Primer apellido
+              <input data-testid="first_surname" value={form.first_surname}
+                onChange={(e) => onChange('first_surname', e.target.value)} required />
+            </label>
+            <label className="field">Segundo apellido
+              <input value={form.second_surname ?? ''}
+                onChange={(e) => onChange('second_surname', e.target.value)} />
+            </label>
+            <label className="field">Teléfono
+              <input value={form.phone ?? ''}
+                onChange={(e) => onChange('phone', e.target.value)} />
+            </label>
+            <label className="field">Email
+              <input type="email" value={form.email ?? ''}
+                onChange={(e) => onChange('email', e.target.value)} />
             </label>
             <label className="field">Dirección
-              <input value={form.direccion ?? ''} onChange={(e) => onChange('direccion', e.target.value)} />
-            </label>
-            <label className="field">Tipo documento
-              <select value={form.tipoDocumento ?? 'CC'} onChange={(e) => onChange('tipoDocumento', e.target.value)}>
-                <option value="CC">CC</option>
-                <option value="CE">CE</option>
-                <option value="TI">TI</option>
-                <option value="NIT">NIT</option>
-              </select>
-            </label>
-            <label className="field">Documento
-              <input data-testid="documento" value={form.documento}
-                onChange={(e) => onChange('documento', e.target.value)} required />
+              <input value={form.address ?? ''}
+                onChange={(e) => onChange('address', e.target.value)} />
             </label>
           </div>
           <div className="mt-4 flex gap-2">
@@ -84,26 +94,29 @@ export default function DuenosPage() {
       </div>
 
       <div className="card">
-        <h2 className="mb-4 text-xl font-semibold">Dueños</h2>
+        <h2 className="mb-4 text-xl font-semibold">Propietarios</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="bg-slate-100 text-left">
-                <th className="p-2">Nombre</th><th className="p-2">Documento</th>
-                <th className="p-2">Contacto</th><th className="p-2">Dirección</th><th className="p-2"></th>
+                <th className="p-2">Nombre</th>
+                <th className="p-2">Teléfono</th>
+                <th className="p-2">Email</th>
+                <th className="p-2">Dirección</th>
+                <th className="p-2"></th>
               </tr>
             </thead>
             <tbody data-testid="lista-duenos">
               {items.map((d) => (
-                <tr key={d.id} className="border-b border-slate-100">
-                  <td className="p-2">{d.nombre}</td>
-                  <td className="p-2">{d.tipoDocumento} {d.documento}</td>
-                  <td className="p-2">{d.contacto}</td>
-                  <td className="p-2">{d.direccion}</td>
+                <tr key={d.owner_id} className="border-b border-slate-100">
+                  <td className="p-2">{d.name} {d.first_surname}</td>
+                  <td className="p-2">{d.phone ?? '-'}</td>
+                  <td className="p-2">{d.email ?? '-'}</td>
+                  <td className="p-2">{d.address ?? '-'}</td>
                   <td className="p-2">
                     <div className="flex gap-2">
                       <button className="btn-edit" onClick={() => editar(d)}>Editar</button>
-                      <button className="btn-danger" onClick={() => eliminar(d.id!)}>Eliminar</button>
+                      <button className="btn-danger" onClick={() => deshabilitar(d.owner_id)}>Deshabilitar</button>
                     </div>
                   </td>
                 </tr>

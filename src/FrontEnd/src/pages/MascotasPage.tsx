@@ -1,55 +1,47 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { duenosApi, mascotasApi, serviciosApi } from '../api/client';
-import type { Dueno, Mascota, MascotaRequest, Servicio } from '../api/types';
-import NuevoDuenoInline from '../components/NuevoDuenoInline';
+import { petsApi, ownersApi, speciesApi, breedsApi } from '../api/client';
+import type { Pet, CreatePetRequest, Owner, Species, Breed } from '../api/types';
 
-const vacio: MascotaRequest = {
-  nombre: '', raza: '', anios: undefined, servicio: '',
-  fechahoraIngreso: '', fechahoraSalida: '', duenoId: undefined,
+const vacio: CreatePetRequest = {
+  owner_id: 0, species_id: 0, breed_id: 0, name: '',
+  birthdate: '', sex: '', color: '', weight: undefined,
 };
 
 export default function MascotasPage() {
-  const [items, setItems] = useState<Mascota[]>([]);
-  const [duenos, setDuenos] = useState<Dueno[]>([]);
-  const [servicios, setServicios] = useState<Servicio[]>([]);
-  const [form, setForm] = useState<MascotaRequest>(vacio);
+  const [items, setItems] = useState<Pet[]>([]);
+  const [owners, setOwners] = useState<Owner[]>([]);
+  const [species, setSpecies] = useState<Species[]>([]);
+  const [breeds, setBreeds] = useState<Breed[]>([]);
+  const [form, setForm] = useState<CreatePetRequest>(vacio);
   const [editId, setEditId] = useState<number | null>(null);
   const [error, setError] = useState('');
-  const [mostrarNuevoDueno, setMostrarNuevoDueno] = useState(false);
 
-  const cargar = () => mascotasApi.list().then(setItems).catch((e) => setError(e.message));
-  const cargarDuenos = () => duenosApi.list().then(setDuenos).catch(() => {});
+  const cargar = () =>
+    petsApi.list().then((res) => setItems(res.data)).catch((e) => setError(e.message));
 
   useEffect(() => {
     cargar();
-    cargarDuenos();
-    serviciosApi.list().then(setServicios).catch(() => {});
+    ownersApi.list().then((res) => setOwners(res.data)).catch(() => {});
+    speciesApi.list().then((res) => setSpecies(res.data)).catch(() => {});
   }, []);
 
-  const labelServicio = (nombre?: string) =>
-    servicios.find((s) => s.nombre === nombre)?.label ?? nombre ?? '-';
-
-  const limpiar = (req: MascotaRequest): MascotaRequest => ({
-    ...req,
-    fechahoraIngreso: req.fechahoraIngreso || undefined,
-    fechahoraSalida: req.fechahoraSalida || undefined,
-  });
+  useEffect(() => {
+    if (form.species_id) {
+      breedsApi.list(form.species_id).then((res) => setBreeds(res.data)).catch(() => {});
+    } else {
+      setBreeds([]);
+    }
+  }, [form.species_id]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!form.duenoId) {
-      setError('Debes seleccionar un dueño (o crear uno nuevo)');
-      return;
-    }
-    if (!form.servicio) {
-      setError('Debes seleccionar un servicio (tipo de consulta)');
-      return;
-    }
+    if (!form.owner_id) { setError('Debes seleccionar un propietario'); return; }
+    if (!form.species_id) { setError('Debes seleccionar una especie'); return; }
+    if (!form.breed_id) { setError('Debes seleccionar una raza'); return; }
     try {
-      const payload = limpiar(form);
-      if (editId) await mascotasApi.update(editId, payload);
-      else await mascotasApi.create(payload);
+      if (editId) await petsApi.update(editId, form);
+      else await petsApi.create(form);
       setForm(vacio);
       setEditId(null);
       cargar();
@@ -58,28 +50,23 @@ export default function MascotasPage() {
     }
   };
 
-  const editar = (m: Mascota) => {
+  const editar = (p: Pet) => {
     setForm({
-      nombre: m.nombre, raza: m.raza, anios: m.anios, servicio: m.servicio,
-      fechahoraIngreso: m.fechahoraIngreso ?? '', fechahoraSalida: m.fechahoraSalida ?? '',
-      duenoId: m.dueno?.id, turnoId: m.turno?.id,
+      owner_id: p.owner_id,
+      species_id: p.species_id,
+      breed_id: p.breed_id,
+      name: p.name,
+      birthdate: p.birthdate ?? '',
+      sex: p.sex ?? '',
+      color: p.color ?? '',
+      weight: p.weight,
     });
-    setEditId(m.id ?? null);
+    setEditId(p.pet_id);
   };
 
-  const eliminar = async (id: number) => {
-    try {
-      await mascotasApi.remove(id);
-      cargar();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
-
-  const onDuenoCreado = (d: Dueno) => {
-    setMostrarNuevoDueno(false);
-    cargarDuenos();
-    setForm((f) => ({ ...f, duenoId: d.id }));
+  const deshabilitar = async (id: number) => {
+    try { await petsApi.disable(id); cargar(); }
+    catch (err) { setError((err as Error).message); }
   };
 
   return (
@@ -90,57 +77,57 @@ export default function MascotasPage() {
         <form onSubmit={submit}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="field">Nombre
-              <input data-testid="nombre" value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+              <input data-testid="nombre" value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </label>
-            <label className="field">Raza
-              <input value={form.raza ?? ''} onChange={(e) => setForm({ ...form, raza: e.target.value })} />
-            </label>
-            <label className="field">Años
-              <input type="number" value={form.anios ?? ''}
-                onChange={(e) => setForm({ ...form, anios: e.target.value ? Number(e.target.value) : undefined })} />
-            </label>
-            <label className="field">Tipo de consulta (servicio)
-              <select data-testid="servicio" value={form.servicio ?? ''}
-                onChange={(e) => setForm({ ...form, servicio: e.target.value })} required>
-                <option value="">-- selecciona un servicio --</option>
-                {servicios.map((s) => (
-                  <option key={s.nombre} value={s.nombre}>
-                    {s.label}{s.prioritario ? ' (prioritario)' : ''}
-                  </option>
+            <label className="field">Propietario
+              <select data-testid="owner" value={form.owner_id || ''}
+                onChange={(e) => setForm({ ...form, owner_id: Number(e.target.value) })} required>
+                <option value="">-- selecciona --</option>
+                {owners.map((o) => (
+                  <option key={o.owner_id} value={o.owner_id}>{o.name} {o.first_surname}</option>
                 ))}
               </select>
             </label>
-            <label className="field">Fecha/hora ingreso
-              <input type="datetime-local" value={form.fechahoraIngreso ?? ''}
-                onChange={(e) => setForm({ ...form, fechahoraIngreso: e.target.value })} />
+            <label className="field">Especie
+              <select value={form.species_id || ''}
+                onChange={(e) => setForm({ ...form, species_id: Number(e.target.value), breed_id: 0 })} required>
+                <option value="">-- selecciona --</option>
+                {species.map((s) => (
+                  <option key={s.species_id} value={s.species_id}>{s.species_name}</option>
+                ))}
+              </select>
             </label>
-            <label className="field">Fecha/hora salida
-              <input type="datetime-local" value={form.fechahoraSalida ?? ''}
-                onChange={(e) => setForm({ ...form, fechahoraSalida: e.target.value })} />
+            <label className="field">Raza
+              <select value={form.breed_id || ''}
+                onChange={(e) => setForm({ ...form, breed_id: Number(e.target.value) })} required>
+                <option value="">-- selecciona --</option>
+                {breeds.map((b) => (
+                  <option key={b.breed_id} value={b.breed_id}>{b.breed_name}</option>
+                ))}
+              </select>
             </label>
-            <label className="field sm:col-span-2">Dueño
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <select className="flex-1" data-testid="dueno" value={form.duenoId ?? ''}
-                  onChange={(e) => setForm({ ...form, duenoId: e.target.value ? Number(e.target.value) : undefined })}>
-                  <option value="">-- selecciona un dueño --</option>
-                  {duenos.map((d) => <option key={d.id} value={d.id}>{d.nombre} ({d.documento})</option>)}
-                </select>
-                <button type="button" className="btn-secondary" data-testid="btn-nuevo-dueno"
-                  onClick={() => setMostrarNuevoDueno((v) => !v)}>+ Nuevo dueño</button>
-              </div>
+            <label className="field">Fecha de nacimiento
+              <input type="date" value={form.birthdate ?? ''}
+                onChange={(e) => setForm({ ...form, birthdate: e.target.value })} />
+            </label>
+            <label className="field">Sexo
+              <select value={form.sex ?? ''}
+                onChange={(e) => setForm({ ...form, sex: e.target.value })}>
+                <option value="">-- selecciona --</option>
+                <option value="M">Macho</option>
+                <option value="F">Hembra</option>
+              </select>
+            </label>
+            <label className="field">Color
+              <input value={form.color ?? ''}
+                onChange={(e) => setForm({ ...form, color: e.target.value })} />
+            </label>
+            <label className="field">Peso (kg)
+              <input type="number" step="0.1" value={form.weight ?? ''}
+                onChange={(e) => setForm({ ...form, weight: e.target.value ? Number(e.target.value) : undefined })} />
             </label>
           </div>
-
-          {mostrarNuevoDueno && (
-            <NuevoDuenoInline onCreado={onDuenoCreado} onCancelar={() => setMostrarNuevoDueno(false)} />
-          )}
-
-          <p className="mt-3 text-xs text-slate-500">
-            El turno se asigna automáticamente al guardar, numerado por servicio y con
-            prioridad para las urgencias.
-          </p>
-
           <div className="mt-4 flex gap-2">
             <button className="btn-primary" type="submit" data-testid="guardar">Guardar</button>
             {editId && (
@@ -157,31 +144,28 @@ export default function MascotasPage() {
           <table className="w-full min-w-[680px] text-sm">
             <thead>
               <tr className="bg-slate-100 text-left">
-                <th className="p-2">Nombre</th><th className="p-2">Raza</th><th className="p-2">Años</th>
-                <th className="p-2">Servicio</th><th className="p-2">Dueño</th><th className="p-2">Turno</th>
-                <th className="p-2">Espera</th><th className="p-2"></th>
+                <th className="p-2">Nombre</th>
+                <th className="p-2">Especie</th>
+                <th className="p-2">Raza</th>
+                <th className="p-2">Propietario</th>
+                <th className="p-2">Nacimiento</th>
+                <th className="p-2">Peso</th>
+                <th className="p-2"></th>
               </tr>
             </thead>
             <tbody data-testid="lista-mascotas">
-              {items.map((m) => (
-                <tr key={m.id} className="border-b border-slate-100">
-                  <td className="p-2">{m.nombre}</td>
-                  <td className="p-2">{m.raza}</td>
-                  <td className="p-2">{m.anios}</td>
-                  <td className="p-2">{labelServicio(m.servicio)}</td>
-                  <td className="p-2">{m.dueno?.nombre ?? '-'}</td>
-                  <td className="p-2">
-                    {m.turno?.codigo ? (
-                      <span className={`rounded px-2 py-0.5 text-xs font-bold ${
-                        m.turno.prioritario ? 'bg-red-100 text-red-700' : 'bg-brand/10 text-brand-dark'
-                      }`}>{m.turno.codigo}</span>
-                    ) : '-'}
-                  </td>
-                  <td className="p-2">{m.turno?.tiempoDeEspera ?? 0} min</td>
+              {items.map((p) => (
+                <tr key={p.pet_id} className="border-b border-slate-100">
+                  <td className="p-2">{p.name}</td>
+                  <td className="p-2">{p.species_name ?? '-'}</td>
+                  <td className="p-2">{p.breed_name ?? '-'}</td>
+                  <td className="p-2">{p.owner_name ?? '-'}</td>
+                  <td className="p-2">{p.birthdate ?? '-'}</td>
+                  <td className="p-2">{p.weight != null ? `${p.weight} kg` : '-'}</td>
                   <td className="p-2">
                     <div className="flex gap-2">
-                      <button className="btn-edit" onClick={() => editar(m)}>Editar</button>
-                      <button className="btn-danger" onClick={() => eliminar(m.id!)}>Eliminar</button>
+                      <button className="btn-edit" onClick={() => editar(p)}>Editar</button>
+                      <button className="btn-danger" onClick={() => deshabilitar(p.pet_id)}>Deshabilitar</button>
                     </div>
                   </td>
                 </tr>

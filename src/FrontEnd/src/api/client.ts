@@ -1,92 +1,136 @@
 import type {
-  AuthResponse, Cita, CitaRequest, Dueno, FilaItem, LoginRequest, Mascota,
-  MascotaRequest, Notificacion, RegisterRequest, Servicio, Turno,
+  LoginRequest, LoginResponse, MeResponse,
+  Owner, CreateOwnerRequest,
+  Pet, CreatePetRequest,
+  Appointment, CreateAppointmentRequest,
+  Consultation, CreateConsultationRequest, Species, Breed,
+  ApiList, ApiItem,
 } from './types';
 
 const BASE = '/api';
-const TOKEN_KEY = 'vet_token';
 
-export function setToken(token: string | null) {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-}
-
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
+// fetch con cookies incluidas automáticamente (same-origin via proxy Vite / nginx)
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = getToken();
   const res = await fetch(`${BASE}${url}`, {
+    credentials: 'include',
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers ?? {}),
     },
   });
+
   if (!res.ok) {
     let msg = `Error ${res.status}`;
     try {
       const body = await res.json();
-      if (body?.message) msg = body.message;
-    } catch {
-      /* sin cuerpo */
-    }
+      if (body?.detail) msg = body.detail;
+      else if (body?.message) msg = body.message;
+    } catch { /* sin cuerpo */ }
     throw new Error(msg);
   }
+
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
-export function createCrud<T, R = T>(resource: string) {
-  return {
-    list: () => request<T[]>(`/${resource}`),
-    get: (id: number) => request<T>(`/${resource}/${id}`),
-    create: (data: R) =>
-      request<T>(`/${resource}`, { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: R) =>
-      request<T>(`/${resource}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    remove: (id: number) =>
-      request<void>(`/${resource}/${id}`, { method: 'DELETE' }),
-  };
-}
-
-export const duenosApi = createCrud<Dueno>('duenos');
-export const turnosApi = createCrud<Turno>('turnos');
-export const mascotasApi = createCrud<Mascota, MascotaRequest>('mascotas');
-
-export const serviciosApi = {
-  list: () => request<Servicio[]>('/servicios'),
-};
-
-export const filaApi = {
-  list: () => request<FilaItem[]>('/fila'),
-};
+// ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const authApi = {
-  register: (data: RegisterRequest) =>
-    request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   login: (data: LoginRequest) =>
-    request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+
+  me: () => request<MeResponse>('/auth/me'),
+
+  logout: () => request<{ success: boolean }>('/auth/logout', { method: 'POST' }),
+
+  refresh: () => request<{ success: boolean }>('/auth/refresh', { method: 'POST' }),
 };
 
-export const portalApi = {
-  misMascotas: () => request<Mascota[]>('/portal/mascotas'),
-  crearMascota: (data: MascotaRequest) =>
-    request<Mascota>('/portal/mascotas', { method: 'POST', body: JSON.stringify(data) }),
-  misCitas: () => request<Cita[]>('/portal/citas'),
-  agendar: (data: CitaRequest) =>
-    request<Cita>('/portal/citas', { method: 'POST', body: JSON.stringify(data) }),
-  cancelar: (id: number) =>
-    request<Cita>(`/portal/citas/${id}/cancelar`, { method: 'PUT' }),
-  notificaciones: () => request<Notificacion[]>('/portal/notificaciones'),
-  marcarLeidas: () =>
-    request<void>('/portal/notificaciones/marcar-leidas', { method: 'POST' }),
+// ─── Propietarios ─────────────────────────────────────────────────────────────
+
+export const ownersApi = {
+  list: () => request<ApiList<Owner>>('/owners'),
+  get: (id: number) => request<ApiItem<Owner>>(`/owners/${id}`),
+  create: (data: CreateOwnerRequest) =>
+    request<ApiItem<Owner>>('/owners/create', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<CreateOwnerRequest>) =>
+    request<ApiItem<Owner>>(`/owners/update/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  disable: (id: number) =>
+    request<{ success: boolean }>(`/owners/disable/${id}`, { method: 'PUT' }),
+  enable: (id: number) =>
+    request<{ success: boolean }>(`/owners/enable/${id}`, { method: 'PUT' }),
 };
 
-export const citasAdminApi = {
-  list: () => request<Cita[]>('/citas'),
-  cambiarEstado: (id: number, estado: string) =>
-    request<Cita>(`/citas/${id}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) }),
+// ─── Mascotas ─────────────────────────────────────────────────────────────────
+
+export const petsApi = {
+  list: (params?: { owner_id?: number; species_id?: number; status?: number }) => {
+    const q = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return request<ApiList<Pet>>(`/pets${q}`);
+  },
+  get: (id: number) => request<ApiItem<Pet>>(`/pets/${id}`),
+  create: (data: CreatePetRequest) =>
+    request<ApiItem<Pet>>('/pets/create', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<CreatePetRequest>) =>
+    request<ApiItem<Pet>>(`/pets/update/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  disable: (id: number) =>
+    request<{ success: boolean }>(`/pets/disable/${id}`, { method: 'PUT' }),
+  enable: (id: number) =>
+    request<{ success: boolean }>(`/pets/enable/${id}`, { method: 'PUT' }),
+};
+
+// ─── Citas ────────────────────────────────────────────────────────────────────
+
+export const appointmentsApi = {
+  list: (params?: { pet_id?: number; user_id?: number; status?: number }) => {
+    const q = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return request<ApiList<Appointment>>(`/appointments${q}`);
+  },
+  get: (id: number) => request<ApiItem<Appointment>>(`/appointments/${id}`),
+  create: (data: CreateAppointmentRequest) =>
+    request<ApiItem<Appointment>>('/appointments/create', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<CreateAppointmentRequest>) =>
+    request<ApiItem<Appointment>>(`/appointments/update/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  cancel: (id: number) =>
+    request<{ success: boolean }>(`/appointments/cancel/${id}`, { method: 'PUT' }),
+};
+
+// ─── Consultas ────────────────────────────────────────────────────────────────
+
+export const consultationsApi = {
+  list: (params?: { pet_id?: number; user_id?: number }) => {
+    const q = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return request<ApiList<Consultation>>(`/consultations${q}`);
+  },
+  get: (id: number) => request<ApiItem<Consultation>>(`/consultations/${id}`),
+  create: (data: CreateConsultationRequest) =>
+    request<ApiItem<Consultation>>('/consultations/create', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<CreateConsultationRequest>) =>
+    request<ApiItem<Consultation>>(`/consultations/update/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+};
+
+// ─── Catálogos ────────────────────────────────────────────────────────────────
+
+export const speciesApi = {
+  list: () => request<ApiList<Species>>('/species'),
+};
+
+export const breedsApi = {
+  list: (species_id?: number) => {
+    const q = species_id ? `?species_id=${species_id}` : '';
+    return request<ApiList<Breed>>(`/breeds${q}`);
+  },
+};
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+export const dashboardApi = {
+  petsCount: () => request<{ data: { total: number } }>('/dashboard/pets-count'),
+  ownersCount: () => request<{ data: { total: number } }>('/dashboard/owners-count'),
+  appointmentsByStatus: () => request<ApiList<{ status: number; total: number }>>('/dashboard/appointments-by-status'),
+  consultationsByMonth: () => request<ApiList<{ month: string; total: number }>>('/dashboard/consultations-by-month'),
+  petsBySpecies: () => request<ApiList<{ species: string; total: number }>>('/dashboard/pets-by-species'),
+  vaccinationsByMonth: () => request<ApiList<{ month: string; total: number }>>('/dashboard/vaccinations-by-month'),
+  topVets: () => request<ApiList<{ vet: string; total: number }>>('/dashboard/top-vets'),
 };
