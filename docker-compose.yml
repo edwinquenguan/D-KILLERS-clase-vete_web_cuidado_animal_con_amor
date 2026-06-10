@@ -48,7 +48,7 @@ services:
   backend:
     # Apunta al código del API FastAPI (carpeta hermana de este proyecto)
     build:
-      context: ../../vete_api_cuidado_animal_con_amor
+      context: ../vete_api_cuidado_animal_con_amor
       dockerfile: Dockerfile
     container_name: vet_backend
     restart: unless-stopped
