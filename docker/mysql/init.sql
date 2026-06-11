@@ -131,16 +131,16 @@ CREATE TABLE PETS (
 CREATE TABLE APPOINTMENTS (
   appointment_id INT NOT NULL AUTO_INCREMENT,
   pet_id INT NOT NULL,
-  user_id INT NOT NULL,
+  user_id INT NULL,
   appointment_date DATE NOT NULL,
   appointment_time TIME NOT NULL,
   appointment_reason VARCHAR(500) NOT NULL,
   appointment_date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  appointment_status INT NOT NULL DEFAULT 2,
+  appointment_status INT NOT NULL DEFAULT 1,
   PRIMARY KEY (appointment_id),
   UNIQUE INDEX appointment_id_UNIQUE (appointment_id ASC),
   CONSTRAINT fk_appointment_pet FOREIGN KEY (pet_id) REFERENCES PETS (pet_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_appointment_user FOREIGN KEY (user_id) REFERENCES USERS (user_id) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT fk_appointment_user FOREIGN KEY (user_id) REFERENCES USERS (user_id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
@@ -311,7 +311,7 @@ INNER JOIN MEDICATIONS AS m ON pd.medication_id = m.medication_id;
 -- DATOS INICIALES (bcrypt rounds=12)
 -- ============================================================
 
-INSERT INTO ROLES VALUES (null,'Admin'),(null,'Veterinario'),(null,'Recepcionista');
+INSERT INTO ROLES VALUES (null,'Admin'),(null,'Veterinario'),(null,'Recepcionista'),(null,'Cliente');
 
 INSERT INTO CITIES VALUES
 (null,'Bogotá'),(null,'Medellín'),(null,'Cali'),

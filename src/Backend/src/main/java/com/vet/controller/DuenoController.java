@@ -39,6 +39,12 @@ public class DuenoController {
         return service.update(id, dueno);
     }
 
+    @PutMapping("/{id}/deshabilitar")
+    public ResponseEntity<Void> deshabilitar(@PathVariable Long id) {
+        service.deshabilitar(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.delete(id);

@@ -26,6 +26,9 @@ public class Dueno {
     @Column(nullable = false, unique = true)
     private String documento;
 
+    @Column(nullable = false)
+    private boolean activo = true;
+
     public Dueno() {
     }
 
@@ -75,5 +78,13 @@ public class Dueno {
 
     public void setDocumento(String documento) {
         this.documento = documento;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 }

@@ -1,28 +1,55 @@
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface UserSession {
+export interface RegisterRequest {
+  name: string;
+  first_surname: string;
+  second_surname?: string;
+  email: string;
+  phone: string;
+  password: string;
+  city: number;
+  address?: string;
+}
+
+export interface AuthUser {
   user_id: number;
   name: string;
+  first_surname: string;
   email: string;
-  role: 'Admin' | 'Veterinario' | 'Recepcionista';
+  role: string;
 }
 
-export interface LoginResponse {
-  success: boolean;
-  message: string;
-  data: UserSession;
+// ─── Ciudad ───────────────────────────────────────────────────────────────────
+
+export interface City {
+  city_id: number;
+  city_name: string;
 }
 
-export interface MeResponse {
-  data: UserSession;
+// ─── Especie ──────────────────────────────────────────────────────────────────
+
+export interface Species {
+  species_id: number;
+  species_name: string;
+  species_status: number;
 }
 
-// ─── Propietarios ─────────────────────────────────────────────────────────────
+// ─── Raza ─────────────────────────────────────────────────────────────────────
+
+export interface Breed {
+  breed_id: number;
+  species_id: number;
+  species_name: string;
+  breed_name: string;
+  breed_status: number;
+}
+
+// ─── Propietario (Owner) ──────────────────────────────────────────────────────
 
 export interface Owner {
   owner_id: number;
@@ -41,6 +68,16 @@ export interface Owner {
 export interface CreateOwnerRequest {
   name: string;
   first_surname: string;
+  second_surname: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: number;
+}
+
+export interface UpdateOwnerRequest {
+  name?: string;
+  first_surname?: string;
   second_surname?: string;
   phone?: string;
   email?: string;
@@ -48,7 +85,7 @@ export interface CreateOwnerRequest {
   city?: number;
 }
 
-// ─── Mascotas ─────────────────────────────────────────────────────────────────
+// ─── Mascota (Pet) ────────────────────────────────────────────────────────────
 
 export interface Pet {
   pet_id: number;
@@ -74,22 +111,29 @@ export interface CreatePetRequest {
   species_id: number;
   breed_id: number;
   name: string;
+  birthdate: string;
+  sex: string;
+  color: string;
+  weight: number;
+}
+
+export interface UpdatePetRequest {
+  name?: string;
   birthdate?: string;
   sex?: string;
   color?: string;
   weight?: number;
+  breed_id?: number;
 }
 
-// ─── Citas ────────────────────────────────────────────────────────────────────
-
-export type AppointmentStatus = 1 | 2 | 3;
+// ─── Cita (Appointment) ───────────────────────────────────────────────────────
 
 export interface Appointment {
   appointment_id: number;
   appointment_date: string;
   appointment_time: string;
   appointment_reason: string;
-  appointment_status: AppointmentStatus;
+  appointment_status: number;
   appointment_date_created: string;
   pet_id: number;
   pet_name: string;
@@ -97,8 +141,8 @@ export interface Appointment {
   owner_id: number;
   owner_full_name: string;
   owner_phone: string;
-  vet_id: number;
-  vet_name: string;
+  vet_id: number | null;
+  vet_name: string | null;
 }
 
 export interface CreateAppointmentRequest {
@@ -106,64 +150,52 @@ export interface CreateAppointmentRequest {
   user_id: number;
   appointment_date: string;
   appointment_time: string;
-  appointment_reason: string;
+  reason: string;
 }
 
-// ─── Consultas ────────────────────────────────────────────────────────────────
-
-export interface Consultation {
-  consultation_id: number;
-  consultation_date: string;
-  consultation_weight: number;
-  consultation_temperature: number;
-  consultation_diagnosis: string;
-  consultation_treatment: string;
-  consultation_notes?: string;
-  pet_id: number;
-  pet_name: string;
-  species_name: string;
-  breed_name: string;
-  owner_id: number;
-  owner_full_name: string;
-  owner_phone: string;
-  vet_id: number;
-  vet_name: string;
-  appointment_id?: number;
-}
-
-export interface CreateConsultationRequest {
-  pet_id: number;
-  user_id: number;
-  appointment_id?: number;
-  weight: number;
-  temperature: number;
-  diagnosis: string;
-  treatment: string;
-  notes?: string;
-}
-
-// ─── Catálogos ────────────────────────────────────────────────────────────────
-
-export interface Species {
+export interface RegisterMyPetRequest {
   species_id: number;
-  species_name: string;
-  species_status: number;
-}
-
-export interface Breed {
   breed_id: number;
-  species_id: number;
-  species_name: string;
-  breed_name: string;
-  breed_status: number;
+  name: string;
+  birthdate: string;
+  sex: string;
+  color: string;
+  weight: number;
 }
 
-// ─── Respuesta genérica de la API ─────────────────────────────────────────────
-
-export interface ApiList<T> {
-  data: T[];
+export interface RequestAppointmentRequest {
+  pet_id: number;
+  appointment_date: string;
+  appointment_time: string;
+  reason: string;
 }
 
-export interface ApiItem<T> {
+export interface UpdateAppointmentRequest {
+  user_id?: number;
+  appointment_date?: string;
+  appointment_time?: string;
+  reason?: string;
+  status?: number;
+}
+
+// ─── Usuario de staff ─────────────────────────────────────────────────────────
+
+export interface StaffUser {
+  id: number;
+  name: string;
+  first_surname: string;
+  email: string;
+  rol_name: string;
+  rol_id: number;
+}
+
+// ─── API wrapper ──────────────────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
   data: T;
+}
+
+export interface ApiSuccess {
+  success: boolean;
+  message: string;
 }

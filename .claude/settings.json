@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr -i \"source destination workdir\")",
+      "Bash(python -c ' *)",
+      "Bash(docker cp *)",
+      "Bash(curl -s http://localhost/api/appointments/request)",
+      "Bash(python -c \"import sys,json; print\\(json.loads\\(sys.stdin.read\\(\\)\\)\\)\")",
+      "Bash(curl -s http://localhost/api/pets/my)"
+    ],
+    "additionalDirectories": [
+      "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\species\\routes",
+      "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\breeds\\routes",
+      "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\pets\\models"
+    ]
+  }
+}

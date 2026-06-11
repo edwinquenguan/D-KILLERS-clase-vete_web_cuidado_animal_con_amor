@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 
 interface Props {
   children: ReactNode;
-  /** Roles permitidos: 'Admin' | 'Veterinario' | 'Recepcionista' */
   roles?: string[];
 }
 
@@ -21,7 +20,9 @@ export default function RutaProtegida({ children, roles }: Props) {
 
   if (!sesion) return <Navigate to="/login" replace />;
 
-  if (roles && !roles.includes(sesion.role)) return <Navigate to="/" replace />;
+  if (roles && !roles.includes(sesion.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return <>{children}</>;
 }

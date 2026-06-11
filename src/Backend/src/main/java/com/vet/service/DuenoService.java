@@ -17,7 +17,7 @@ public class DuenoService {
     }
 
     public List<Dueno> findAll() {
-        return repository.findAll();
+        return repository.findByActivoTrue();
     }
 
     public Dueno findById(Long id) {
@@ -27,6 +27,7 @@ public class DuenoService {
 
     public Dueno create(Dueno dueno) {
         dueno.setId(null);
+        dueno.setActivo(true);
         return repository.save(dueno);
     }
 
@@ -38,6 +39,12 @@ public class DuenoService {
         dueno.setTipoDocumento(datos.getTipoDocumento());
         dueno.setDocumento(datos.getDocumento());
         return repository.save(dueno);
+    }
+
+    public void deshabilitar(Long id) {
+        Dueno dueno = findById(id);
+        dueno.setActivo(false);
+        repository.save(dueno);
     }
 
     public void delete(Long id) {

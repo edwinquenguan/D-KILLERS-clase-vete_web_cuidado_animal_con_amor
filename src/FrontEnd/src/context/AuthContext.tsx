@@ -1,30 +1,30 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { authApi } from '../api/client';
-import type { UserSession } from '../api/types';
+import type { AuthUser } from '../api/types';
 
 interface AuthCtx {
-  sesion: UserSession | null;
+  sesion: AuthUser | null;
   cargando: boolean;
-  entrar: (sesion: UserSession) => void;
+  entrar: (user: AuthUser) => void;
   salir: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [sesion, setSesion] = useState<UserSession | null>(null);
+  const [sesion, setSesion] = useState<AuthUser | null>(null);
   const [cargando, setCargando] = useState(true);
 
-  // Al montar, intentar recuperar sesión desde la cookie vía /me
   useEffect(() => {
+    // Restaurar sesión desde la cookie httponly via /api/auth/me
     authApi.me()
-      .then((res) => setSesion(res.data))
+      .then((user) => setSesion(user))
       .catch(() => setSesion(null))
       .finally(() => setCargando(false));
   }, []);
 
-  const entrar = (data: UserSession) => {
-    setSesion(data);
+  const entrar = (user: AuthUser) => {
+    setSesion(user);
   };
 
   const salir = async () => {

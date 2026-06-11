@@ -3,13 +3,19 @@ package com.vet.dto;
 import com.vet.model.Servicio;
 import jakarta.validation.constraints.NotBlank;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class MascotaRequest {
 
     @NotBlank
     private String nombre;
+    private String especie;
     private String raza;
+    private String sexo;
+    private String color;
+    private Double peso;
+    private LocalDate fechaNacimiento;
     private Integer anios;
     // Tipo de consulta: servicio del catalogo
     private Servicio servicio;
@@ -28,12 +34,52 @@ public class MascotaRequest {
         this.nombre = nombre;
     }
 
+    public String getEspecie() {
+        return especie;
+    }
+
+    public void setEspecie(String especie) {
+        this.especie = especie;
+    }
+
     public String getRaza() {
         return raza;
     }
 
     public void setRaza(String raza) {
         this.raza = raza;
+    }
+
+    public String getSexo() {
+        return sexo;
+    }
+
+    public void setSexo(String sexo) {
+        this.sexo = sexo;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public Double getPeso() {
+        return peso;
+    }
+
+    public void setPeso(Double peso) {
+        this.peso = peso;
+    }
+
+    public LocalDate getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(LocalDate fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
     }
 
     public Integer getAnios() {

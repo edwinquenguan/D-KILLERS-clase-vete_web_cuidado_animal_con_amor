@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -25,21 +26,17 @@ public class MascotaService {
     }
 
     public List<Mascota> findAll() {
-        return repository.findAll();
+        return repository.findByActivoTrue();
     }
 
     public List<Mascota> deDueno(Long duenoId) {
-        return repository.findByDuenoId(duenoId);
+        return repository.findByDuenoIdAndActivoTrue(duenoId);
     }
 
-    /**
-     * Fila de espera ordenada (urgencias primero, luego por llegada). El tiempo estimado
-     * se calcula en vivo segun la posicion, reflejando la prioridad actual de la cola.
-     */
     public List<FilaItem> filaDeEspera() {
         List<Mascota> enCola =
-                repository.findByTurnoDisponibilidadTrueOrderByTurnoPrioritarioDescFechahoraIngresoAsc();
-        List<FilaItem> fila = new java.util.ArrayList<>();
+                repository.findByActivoTrueAndTurnoDisponibilidadTrueOrderByTurnoPrioritarioDescFechahoraIngresoAsc();
+        List<FilaItem> fila = new ArrayList<>();
         for (int i = 0; i < enCola.size(); i++) {
             fila.add(FilaItem.de(enCola.get(i), i + 1, i * TurnoService.ATENCION_BASE_MIN));
         }
@@ -55,14 +52,13 @@ public class MascotaService {
     public Mascota create(MascotaRequest req) {
         Mascota mascota = new Mascota();
         aplicar(mascota, req);
-        // Fecha de ingreso automatica si no se envia
         if (mascota.getFechahoraIngreso() == null) {
             mascota.setFechahoraIngreso(LocalDateTime.now());
         }
-        // El turno se asigna automaticamente generando el siguiente de la cola del servicio
         if (mascota.getTurno() == null) {
             mascota.setTurno(turnoService.generarSiguiente(mascota.getServicio()));
         }
+        mascota.setActivo(true);
         return repository.save(mascota);
     }
 
@@ -70,11 +66,17 @@ public class MascotaService {
     public Mascota update(Long id, MascotaRequest req) {
         Mascota mascota = findById(id);
         aplicar(mascota, req);
-        // Al registrar la salida, el turno se cierra (sale de la cola)
         if (mascota.getFechahoraSalida() != null) {
             turnoService.cerrar(mascota.getTurno());
         }
         return repository.save(mascota);
+    }
+
+    @Transactional
+    public void deshabilitar(Long id) {
+        Mascota mascota = findById(id);
+        mascota.setActivo(false);
+        repository.save(mascota);
     }
 
     @Transactional
@@ -91,7 +93,12 @@ public class MascotaService {
             throw new IllegalArgumentException("Debe seleccionar un servicio (tipo de consulta)");
         }
         mascota.setNombre(req.getNombre());
+        mascota.setEspecie(req.getEspecie());
         mascota.setRaza(req.getRaza());
+        mascota.setSexo(req.getSexo());
+        mascota.setColor(req.getColor());
+        mascota.setPeso(req.getPeso());
+        mascota.setFechaNacimiento(req.getFechaNacimiento());
         mascota.setAnios(req.getAnios());
         mascota.setServicio(req.getServicio());
         if (req.getFechahoraIngreso() != null) {
@@ -99,7 +106,6 @@ public class MascotaService {
         }
         mascota.setFechahoraSalida(req.getFechahoraSalida());
         mascota.setDueno(duenoService.findById(req.getDuenoId()));
-        // turnoId solo se usa al editar para conservar el turno ya asignado
         if (req.getTurnoId() != null) {
             mascota.setTurno(turnoService.findById(req.getTurnoId()));
         }
