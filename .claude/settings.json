@@ -6,12 +6,15 @@
       "Bash(docker cp *)",
       "Bash(curl -s http://localhost/api/appointments/request)",
       "Bash(python -c \"import sys,json; print\\(json.loads\\(sys.stdin.read\\(\\)\\)\\)\")",
-      "Bash(curl -s http://localhost/api/pets/my)"
+      "Bash(curl -s http://localhost/api/pets/my)",
+      "Bash(dir \"d:\\\\KILLERS\\\\clase\\\\\")",
+      "Bash(.\\\\gradlew compileTestJava)"
     ],
     "additionalDirectories": [
       "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\species\\routes",
       "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\breeds\\routes",
-      "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\pets\\models"
+      "d:\\KILLERS\\clase\\vete_api_cuidado_animal_con_amor\\app\\features\\pets\\models",
+      "d:\\KILLERS\\clase\\vete_test_cuidado_animal_con_amor"
     ]
   }
 }

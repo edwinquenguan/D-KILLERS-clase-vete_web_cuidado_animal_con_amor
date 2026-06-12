@@ -173,23 +173,23 @@ export default function MascotasPage() {
               </select>
             </label>
             <label className="field">Fecha de nacimiento
-              <input type="date" value={form.birthdate}
+              <input data-testid="birthdate" type="date" value={form.birthdate}
                 onChange={(e) => setForm({ ...form, birthdate: e.target.value })} required />
             </label>
             <label className="field">Sexo
-              <select value={form.sex}
+              <select data-testid="sexo" value={form.sex}
                 onChange={(e) => setForm({ ...form, sex: e.target.value })} required>
                 <option value="">-- selecciona --</option>
                 {SEXOS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </label>
             <label className="field">Color
-              <input value={form.color}
+              <input data-testid="color" value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })} required
                 placeholder="Ej: Negro, Atigrado..." />
             </label>
             <label className="field">Peso (kg)
-              <input type="number" min="0" max="999" step="0.1"
+              <input data-testid="peso" type="number" min="0" max="999" step="0.1"
                 value={form.weight || ''}
                 onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })} required />
             </label>

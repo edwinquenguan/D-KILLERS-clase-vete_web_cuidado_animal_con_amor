@@ -120,11 +120,11 @@ export default function DuenosPage() {
         <form onSubmit={submit}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="field">Nombre
-              <input value={form.name}
+              <input data-testid="nombre" value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </label>
             <label className="field">Primer apellido
-              <input value={form.first_surname}
+              <input data-testid="first_surname" value={form.first_surname}
                 onChange={(e) => setForm({ ...form, first_surname: e.target.value })} required />
             </label>
             <label className="field">Segundo apellido
@@ -132,15 +132,15 @@ export default function DuenosPage() {
                 onChange={(e) => setForm({ ...form, second_surname: e.target.value })} />
             </label>
             <label className="field">Teléfono
-              <input type="tel" value={form.phone}
+              <input data-testid="telefono" type="tel" value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
             </label>
             <label className="field">Correo electrónico
-              <input type="email" value={form.email}
+              <input data-testid="email-dueno" type="email" value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} required />
             </label>
             <label className="field">Ciudad
-              <select value={form.city || ''}
+              <select data-testid="ciudad" value={form.city || ''}
                 onChange={(e) => setForm({ ...form, city: Number(e.target.value) })} required>
                 <option value="">-- selecciona --</option>
                 {cities.map((c) => (
@@ -149,12 +149,12 @@ export default function DuenosPage() {
               </select>
             </label>
             <label className="field sm:col-span-2">Dirección
-              <input value={form.address}
+              <input data-testid="direccion" value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })} required />
             </label>
           </div>
           <div className="mt-4 flex gap-2">
-            <button className="btn-primary" type="submit">
+            <button className="btn-primary" type="submit" data-testid="guardar">
               {editId ? 'Actualizar' : 'Registrar propietario'}
             </button>
             {editId && (
